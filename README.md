@@ -21,7 +21,7 @@ $ $EDITOR .env # populate with your own values
 $ node server.js
 ```
 
-Update your location by going to `/where`.
+Update your location by going to `/here`.
 
 ## license
 
