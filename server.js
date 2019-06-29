@@ -23,6 +23,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.engine(
   'html',
   expressHandlebars({
+    defaultLayout: false,
     helpers: {
       humanize: ts => moment(ts).fromNow(),
       json: val => new handlebars.SafeString(JSON.stringify(val)),
