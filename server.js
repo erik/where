@@ -10,7 +10,7 @@ const moment = require('moment');
 const passport = require('passport');
 const passportGoogle = require('passport-google-oauth');
 const redis = require('redis').createClient();
-const session = require('express-session');
+const cookieSession = require('cookie-session');
 
 require('dotenv').config();
 
@@ -34,10 +34,8 @@ app.engine(
 app.set('view engine', 'handlebars');
 
 app.use(
-  session({
+  cookieSession({
     secret: process.env.SESSION_SECRET,
-    saveUninitialized: true,
-    resave: false,
     maxAge: 365 * 24 * 60 * 60 * 1000  // ~1 year
   })
 );
