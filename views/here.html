@@ -27,6 +27,8 @@
 <div id="map"></div>
 
 <form action="/here" method="post" autocomplete="off">
+    <input name="why" type="text" placeholder="why are you here"
+           {{#if why}} value="{{why}}" {{/if}}>
     <input name="comment" type="text" placeholder="leave a note">
     <input name="lat" type="hidden" required>
     <input name="lng" type="hidden" required>
@@ -44,6 +46,11 @@
       delete
     </a>
   </div>
+
+
+  {{# if why}}
+  <b>{{why}}</b>
+  {{/if}}
 
   <div>
     {{#if comment.length }} {{ unsafe comment }} {{ else }} "no comment" {{/if}}

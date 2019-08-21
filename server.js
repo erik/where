@@ -71,6 +71,7 @@ function requireAuth(req, res, next) {
   return next();
 }
 
+// Where are you.
 function where() {
   return new Promise((resolve, reject) => {
     redis.hgetall('where', (err, data) => {
@@ -88,19 +89,35 @@ function where() {
   });
 }
 
-function here(lat, lng, comment) {
+// Why are you there.
+function why() {
+  return new Promise((resolve, reject) => {
+    redis.get('why', (err, data) => {
+      if (err !== null) {
+        console.error('get failed', err);
+        return reject(err);
+      }
+
+      return resolve(data);
+    });
+  });
+}
+
+// You are here.
+function here(lat, lng, comment, why) {
   const createdAt = new Date();
   const redisKey = createdAt.toISOString();
 
   const point = JSON.stringify({
     lat,
     lng,
+    why,
     comment: escapeHtml(comment),
     ts: createdAt,
     key: redisKey
   });
 
-  return new Promise((resolve, reject) => {
+  const setWhere = new Promise((resolve, reject) => {
     redis.hset('where', redisKey, point, err => {
       if (err !== null) {
         console.error('hset failed', err);
@@ -110,6 +127,19 @@ function here(lat, lng, comment) {
       return resolve(null);
     });
   });
+
+  const setWhy = new Promise((resolve, reject) => {
+    if ((why || '')) {
+      redis.set('why', why, err => err ? reject(err) : resolve(null));
+    } else {
+      resolve(null);
+    }
+  });
+
+  return Promise.all([
+    setWhere,
+    setWhy
+  ]);
 }
 
 app.get('/', (req, res) => {
@@ -133,15 +163,19 @@ app.get('/who/google/callback', passportAuthenticate, (req, res) => {
 });
 
 app.get('/here', requireAuth, (req, res) => {
-  where()
-    .then(points => res.render('here.html', { points }))
+  Promise.all([where(), why()])
+    .then(([points, why]) => res.render('here.html', { points, why }))
     .catch(() => res.sendStatus(500));
 });
 
 app.post('/here', requireAuth, (req, res) => {
-  here(req.body.lat, req.body.lng, req.body.comment)
-    .then(() => res.redirect('/'))
-    .catch(() => res.sendStatus(500));
+  here(
+    req.body.lat,
+    req.body.lng,
+    req.body.comment,
+    req.body.why
+  ).then(() => res.redirect('/'))
+   .catch(() => res.sendStatus(500));
 });
 
 app.post('/here/:id/delete', requireAuth, (req, res) => {

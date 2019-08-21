@@ -30,26 +30,47 @@
    maxZoom: 19
  }).addTo(map);
 
- function addPoints (points) {
-     if (points.length === 0) return;
+ function groupPoints (points) {
+   const groups = {};
+   let c = 0;
 
-     L.polyline(points.map(it => [it.lat, it.lng])).addTo(map);
-
-     points.forEach(point => {
-       const ts = moment(point.ts);
-
-       L.marker([point.lat, point.lng])
-        .bindPopup(`<p>${point.comment}</p>` +
-                   `<em title="${ts}">${ts.fromNow()}</em>`)
-        .addTo(map);
-     });
-
-     const last = points.shift()
-     map.setView([last.lat, last.lng], 10);
+   for (const pt of points) {
+     const why = pt.why || `untitled ${c++}`;
+     groups[why] = groups[why] || [];
+     groups[why].push(pt);
    }
+
+   return Object.values(groups)
+     .sort((a, b) => a[0].ts.localeCompare(b[0].ts))
+     .map(group => ({group, why: group[0].why}));
+ }
+
+ function addPoints (why, points) {
+   if (points.length === 0) return;
+
+   L.polyline(points.map(it => [it.lat, it.lng]))
+     .bindPopup(`<b>${why}</b>`)
+     .addTo(map);
+
+   points.forEach(point => {
+     const ts = moment(point.ts);
+
+     L.marker([point.lat, point.lng])
+       .bindPopup(`<p>${point.comment}</p>` +
+                  `<em title="${ts}">${ts.fromNow()}</em>`)
+       .addTo(map);
+   });
+
+   const last = points.shift()
+   map.setView([last.lat, last.lng], 10);
+ }
 </script>
 
 
 <script>
- addPoints({{ json points }});
+  const groups = groupPoints({{ json points }});
+
+  for (const {why, group} of groups) {
+    addPoints(why, group);
+  }
 </script>
