@@ -84,11 +84,13 @@
 
    for (const link of document.querySelectorAll('.delete')) {
      link.addEventListener('click', (e) => {
-       fetch(`/here/${e.target.dataset.key}/delete`, {
-         method: 'POST', credentials: 'same-origin'
-       })
-         .then(() => window.location.reload())
-         .catch(err => alert(err.toString()));
+       if (window.confirm('Are you sure you want to delete this entry?')) {
+         fetch(`/here/${e.target.dataset.key}/delete`, {
+           method: 'POST', credentials: 'same-origin'
+         })
+           .then(() => window.location.reload())
+           .catch(err => alert(err.toString()));
+       }
      })
    }
  })()
