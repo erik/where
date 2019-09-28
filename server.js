@@ -89,6 +89,29 @@ function where() {
   });
 }
 
+function setWhere(key, point) {
+  return new Promise((resolve, reject) => {
+    redis.hset('where', key, point, err => {
+      if (err !== null) {
+        console.error('hset failed', err);
+        return reject(err);
+      }
+
+      return resolve(null);
+    });
+  });
+}
+
+function setWhy(why) {
+  return new Promise((resolve, reject) => {
+    if ((why || '')) {
+      redis.set('why', why, err => err ? reject(err) : resolve(null));
+    } else {
+      resolve(null);
+    }
+  });
+}
+
 // Why are you there.
 function why() {
   return new Promise((resolve, reject) => {
@@ -117,28 +140,9 @@ function here(lat, lng, comment, why) {
     key: redisKey
   });
 
-  const setWhere = new Promise((resolve, reject) => {
-    redis.hset('where', redisKey, point, err => {
-      if (err !== null) {
-        console.error('hset failed', err);
-        return reject(err);
-      }
-
-      return resolve(null);
-    });
-  });
-
-  const setWhy = new Promise((resolve, reject) => {
-    if ((why || '')) {
-      redis.set('why', why, err => err ? reject(err) : resolve(null));
-    } else {
-      resolve(null);
-    }
-  });
-
   return Promise.all([
-    setWhere,
-    setWhy
+    setWhere(redisKey, point),
+    setWhy(why)
   ]);
 }
 
@@ -189,6 +193,25 @@ app.post('/here/:id/delete', requireAuth, (req, res) => {
 
     return res.redirect('/here');
   });
+});
+
+app.post('/here/:id/edit', requireAuth, (req, res) => {
+  if (!req.params.id) return res.sendStatus(400);
+
+  redis.hget('where', req.params.id, (err, data) => {
+    if (err !== null) {
+      console.error('hget failed', err);
+      return res.sendStatus(500);
+    }
+
+    let pt = JSON.parse(data);
+    pt.comment = req.body.comment ? escapeHtml(req.body.comment) : pt.comment;
+    pt.why = req.body.why ? req.body.why : pt.why;
+
+    setWhere(req.params.id, JSON.stringify(pt))
+      .then(() => res.redirect('/here'))
+      .catch(() => res.sendStatus(500));
+  })
 });
 
 app.listen(process.env.PORT);

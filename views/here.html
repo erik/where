@@ -16,7 +16,7 @@
       form { margin-top: 1em; width: 100%; }
       input { width: 100%; box-sizing: border-box; margin-bottom: 1em; padding: 1em; }
       input[type="submit"] { padding: 1em; background: #94d2ff; border: none; cursor: pointer; -webkit-appearance: none; }
-      .hidden { visibility: hidden; }
+      .hidden { display: none; }
       .comment { margin: 1em 0; }
       #map { width: 100%; height: 30vh; }
   </style>
@@ -42,11 +42,10 @@
 <div class="comment">
   <div>
     <em>{{ humanize ts }}</em> -
-    <a class="delete" data-key="{{ key }}" href="#" onclick="return false;">
-      delete
-    </a>
+    <a class="edit" href="#" onclick="return false;">edit</a>
+    <a class="delete" data-key="{{ key }}" href="#"
+      onclick="return false;">delete</a>
   </div>
-
 
   {{# if why}}
   <b>{{why}}</b>
@@ -55,6 +54,14 @@
   <div>
     {{#if comment.length }} {{ unsafe comment }} {{ else }} "no comment" {{/if}}
   </div>
+
+  <form action="/here/{{ key }}/edit" class="hidden" method="post" autocomplete="off">
+    <input name="why" type="text" placeholder="why are you here"
+      {{#if why}} value="{{why}}" {{/if}}>
+    <input name="comment" type="text" placeholder="leave a note"
+      {{#if comment.length}} value="{{unsafe comment}}" {{/if}}>
+    <input type="submit" value="update entry">
+  </form>
 </div>
 {{/each}}
 
@@ -82,16 +89,28 @@
      err => { console.error(err); alert(`geolocation failed`); }
    );
 
+   // Make the edit form visible
+   const toggleEditForm = (e) => {
+     const form = e.target.parentNode.parentNode.querySelector('form');
+     form.classList.toggle('hidden');
+   }
+
+   for (const link of document.querySelectorAll('.edit')) {
+     link.addEventListener('click', toggleEditForm);
+   }
+
+   const deletePoint = (e) => {
+     if (window.confirm('Are you sure you want to delete this entry?')) {
+       fetch(`/here/${e.target.dataset.key}/delete`, {
+         method: 'POST', credentials: 'same-origin'
+       })
+         .then(() => window.location.reload())
+         .catch(err => alert(err.toString()));
+     }
+   };
+
    for (const link of document.querySelectorAll('.delete')) {
-     link.addEventListener('click', (e) => {
-       if (window.confirm('Are you sure you want to delete this entry?')) {
-         fetch(`/here/${e.target.dataset.key}/delete`, {
-           method: 'POST', credentials: 'same-origin'
-         })
-           .then(() => window.location.reload())
-           .catch(err => alert(err.toString()));
-       }
-     })
+     link.addEventListener('click', deletePoint);
    }
  })()
 </script>
