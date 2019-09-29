@@ -56,8 +56,9 @@
      const ts = moment(point.ts);
 
      L.marker([point.lat, point.lng])
-       .bindPopup(`<p>${point.comment}</p>` +
-                  `<em title="${ts}">${ts.fromNow()}</em>`)
+      .bindPopup(`<b>${why}</b>` +
+                 `<p>${point.comment}</p>` +
+                 `<em title="${ts}">${ts.fromNow()}</em>`)
        .addTo(map);
    });
 
