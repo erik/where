@@ -8,7 +8,7 @@ const handlebars = require('handlebars');
 const morgan = require('morgan');
 const moment = require('moment');
 const passport = require('passport');
-const passportGoogle = require('passport-google-oauth');
+const passportGoogle = require('passport-google-oauth20');
 const redis = require('redis').createClient();
 const cookieSession = require('cookie-session');
 
@@ -41,7 +41,7 @@ app.use(
 );
 
 passport.use(
-  new passportGoogle.OAuth2Strategy(
+  new passportGoogle.Strategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_SECRET_ID,
