@@ -1,17 +1,18 @@
 <!doctype html>
 
-<head>
-  <title>Where are you?</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<html manifest="/here/cache.manifest">
+  <head>
+    <title>Where are you?</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
-        integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
-        crossorigin=""/>
-  <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"
-          integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q=="
-          crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.3/dist/leaflet.css"
+          integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.3.3/dist/leaflet.js"
+            integrity="sha512-tAGcCfR4Sc5ZP5ZoVz0quoZDYX5aCtEm/eu1KhSLj2c9eFrylXZknQYmxUssFaVJKvvc0dJQixhGjG2yXWiV9Q=="
+            crossorigin=""></script>
 
-  <style>
+    <style>
       body { padding: 1em; max-width: 400px; margin: 0 auto; font-family: sans-serif; }
       form { margin-top: 1em; width: 100%; }
       input { width: 100%; box-sizing: border-box; margin-bottom: 1em; padding: 1em; }
@@ -19,98 +20,154 @@
       .hidden { display: none; }
       .comment { margin: 1em 0; }
       #map { width: 100%; height: 30vh; }
-  </style>
-</head>
+    </style>
+  </head>
 
-<h1>You are here.</h1>
+  <body>
+    <h1>You are here.</h1>
 
-<div id="map"></div>
+    <div id="map"></div>
 
-<form action="/here" method="post" autocomplete="off">
-    <input name="why" type="text" placeholder="why are you here"
-           {{#if why}} value="{{why}}" {{/if}}>
-    <input name="comment" type="text" placeholder="leave a note">
-    <input name="lat" type="hidden" required>
-    <input name="lng" type="hidden" required>
-    <input class="hidden" type="submit" value="post location">
-</form>
+    <form id="post-entry" action="/here" method="post" autocomplete="off">
+      <input name="why" type="text" placeholder="why are you here"
+             {{#if why}} value="{{why}}" {{/if}}>
+      <input name="comment" type="text" placeholder="leave a note">
+      <input name="lat" type="hidden" required>
+      <input name="lng" type="hidden" required>
+      <input class="hidden" type="submit" value="post location">
+    </form>
 
-{{#if points.length}}
-<h2>Previously...</h2>
+    {{#if points.length}}
+    <h2>Previously...</h2>
 
-{{#each points }}
-<div class="comment">
-  <div>
-    <em>{{ humanize ts }}</em> -
-    <a class="edit" href="#" onclick="return false;">edit</a>
-    <a class="delete" data-key="{{ key }}" href="#"
-      onclick="return false;">delete</a>
-  </div>
+    {{#each points }}
+    <div class="comment">
+      <div>
+        <em>{{ humanize ts }}</em> -
+        <a class="edit" href="#" onclick="return false;">edit</a>
+        <a class="delete" data-key="{{ key }}" href="#"
+           onclick="return false;">delete</a>
+      </div>
 
-  {{# if why}}
-  <b>{{why}}</b>
-  {{/if}}
+      {{# if why}}
+      <b>{{why}}</b>
+      {{/if}}
 
-  <div>
-    {{#if comment.length }} {{ unsafe comment }} {{ else }} "no comment" {{/if}}
-  </div>
+      <div>
+        {{#if comment.length }} {{ unsafe comment }} {{ else }} "no comment" {{/if}}
+      </div>
 
-  <form action="/here/{{ key }}/edit" class="hidden" method="post" autocomplete="off">
-    <input name="why" type="text" placeholder="why are you here"
-      {{#if why}} value="{{why}}" {{/if}}>
-    <input name="comment" type="text" placeholder="leave a note"
-      {{#if comment.length}} value="{{unsafe comment}}" {{/if}}>
-    <input type="submit" value="update entry">
-  </form>
-</div>
-{{/each}}
+      <form action="/here/{{ key }}/edit" class="hidden" method="post" autocomplete="off">
+        <input name="why" type="text" placeholder="why are you here"
+               {{#if why}} value="{{why}}" {{/if}}>
+        <input name="comment" type="text" placeholder="leave a note"
+               {{#if comment.length}} value="{{unsafe comment}}" {{/if}}>
+        <input type="submit" value="update entry">
+      </form>
+    </div>
+    {{/each}}
 
-{{/if}}
+    {{/if}}
 
-<script type="text/javascript">
- (function() {
-   if (!navigator.geolocation) return alert("geolocation not available");
+    <script type="text/javascript">
+      (function() {
+        if (!navigator.geolocation) return alert("geolocation not available");
 
-   const map = L.map('map');
-   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const map = L.map('map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-   navigator.geolocation.getCurrentPosition(
-     pos => {
-       const lat = pos.coords.latitude;
-       const lng = pos.coords.longitude;
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
 
-       document.querySelector('input[name="lat"]').value = lat;
-       document.querySelector('input[name="lng"]').value = lng;
-       document.querySelector('.hidden').classList.remove('hidden');
+            document.querySelector('input[name="lat"]').value = lat;
+            document.querySelector('input[name="lng"]').value = lng;
+            document.querySelector('.hidden').classList.remove('hidden');
 
-       L.marker([lat, lng]).addTo(map);
-       map.setView([lat, lng], 10);
-     },
-     err => { console.error(err); alert(`geolocation failed`); }
-   );
+            L.marker([lat, lng]).addTo(map);
+            map.setView([lat, lng], 10);
+          },
+          err => { console.error(err); alert(`geolocation failed`); }
+        );
 
-   // Make the edit form visible
-   const toggleEditForm = (e) => {
-     const form = e.target.parentNode.parentNode.querySelector('form');
-     form.classList.toggle('hidden');
-   }
+        const retryingFormHandler = (e) => {
+          e.preventDefault();
 
-   for (const link of document.querySelectorAll('.edit')) {
-     link.addEventListener('click', toggleEditForm);
-   }
+          const form = e.target;
 
-   const deletePoint = (e) => {
-     if (window.confirm('Are you sure you want to delete this entry?')) {
-       fetch(`/here/${e.target.dataset.key}/delete`, {
-         method: 'POST', credentials: 'same-origin'
-       })
-         .then(() => window.location.reload())
-         .catch(err => alert(err.toString()));
-     }
-   };
+          // A goofy way of converting from the opaque FormData type to a standard object.
+          const data = Array.from(new FormData(form).entries())
+                .reduce((xs, [k, v]) => ({[k]: v, ...xs}), {});
+          data.when = new Date().toISOString();
 
-   for (const link of document.querySelectorAll('.delete')) {
-     link.addEventListener('click', deletePoint);
-   }
- })()
-</script>
+          trySubmitForm(form.action, form.method, data, true);
+        };
+
+        const trySubmitForm = (url, method, data, firstAttempt) => {
+          const prompt = `Retry existing request?\n
+${method} ${url}
+${JSON.stringify(data)}`;
+          if (!firstAttempt && !window.confirm(prompt)) {
+            return;
+          }
+
+          let params = new URLSearchParams();
+          for (const key in data) {
+            params.set(key, data[key]);
+          }
+
+          fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            credentials: 'same-origin',
+            body: params,
+          })
+            .then(res => {
+              if (!res.ok) throw new Error(`Unexpected network status: ${res.status}`);
+              window.location.reload();
+            })
+            .catch(err => {
+              alert(`Request failed... will retry on refresh.\n\n${err.toString()}`);
+
+              let queue = JSON.parse(localStorage.getItem('requests') || '[]');
+              queue.push({url, method, data});
+              localStorage.setItem('requests', JSON.stringify(queue));
+            })
+        };
+
+        for (const form of document.querySelectorAll('form')) {
+          form.addEventListener('submit', retryingFormHandler);
+        }
+
+        // Make the edit form visible
+        const toggleEditForm = (e) => {
+          const form = e.target.parentNode.parentNode.querySelector('form');
+          form.classList.toggle('hidden');
+        }
+
+        for (const link of document.querySelectorAll('.edit')) {
+          link.addEventListener('click', toggleEditForm);
+        }
+
+        const deletePoint = (e) => {
+          if (window.confirm('Are you sure you want to delete this entry?')) {
+            trySubmitForm(`/here/${e.target.dataset.key}/delete`, 'POST', {}, true);
+          }
+        };
+
+        for (const link of document.querySelectorAll('.delete')) {
+          link.addEventListener('click', deletePoint);
+        }
+
+        // Try to clear the existing request backlog at startup.
+        let queue = JSON.parse(localStorage.getItem('requests') || '[]');
+        localStorage.removeItem('requests');
+
+        for (let {url, method, data} of queue) {
+          trySubmitForm(url, method, data, false);
+        }
+      })()
+    </script>
+  </body>
+</html>

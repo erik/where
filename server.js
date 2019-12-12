@@ -127,16 +127,14 @@ function why() {
 }
 
 // You are here.
-function here(lat, lng, comment, why) {
-  const createdAt = new Date();
-  const redisKey = createdAt.toISOString();
-
+function here(when, lat, lng, comment, why) {
+  const redisKey = when;
   const point = JSON.stringify({
     lat,
     lng,
     why,
     comment: escapeHtml(comment),
-    ts: createdAt,
+    ts: new Date(when),
     key: redisKey
   });
 
@@ -174,12 +172,28 @@ app.get('/here', requireAuth, (req, res) => {
 
 app.post('/here', requireAuth, (req, res) => {
   here(
+    req.body.when,
     req.body.lat,
     req.body.lng,
     req.body.comment,
     req.body.why
   ).then(() => res.redirect('/'))
    .catch(() => res.sendStatus(500));
+});
+
+// Offline Application cache. iOS doesn't have real service worker
+// caching implemented at time of writing, so this is the best
+// alternative.
+//
+// See: https://developer.apple.com/library/archive/documentation/iPhone/Conceptual/SafariJSDatabaseGuide/OfflineApplicationCache/OfflineApplicationCache.html
+app.get('/here/cache.manifest', (req, res) => {
+  res.type('text/cache-manifest');
+  res.send(`CACHE MANIFEST
+CACHE:
+# Nothing else to add, as '/here' will automatically be cached.
+NETWORK:
+*
+`);
 });
 
 app.post('/here/:id/delete', requireAuth, (req, res) => {
@@ -211,7 +225,7 @@ app.post('/here/:id/edit', requireAuth, (req, res) => {
     setWhere(req.params.id, JSON.stringify(pt))
       .then(() => res.redirect('/here'))
       .catch(() => res.sendStatus(500));
-  })
+  });
 });
 
 app.listen(process.env.PORT);
