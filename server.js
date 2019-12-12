@@ -191,6 +191,7 @@ app.get('/here/cache.manifest', (req, res) => {
   res.send(`CACHE MANIFEST
 CACHE:
 # Nothing else to add, as '/here' will automatically be cached.
+# Cache-Bust: ${+new Date()}
 NETWORK:
 *
 `);
